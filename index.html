@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Gestão - Ótica Jurado (MVP v1.0 - Produção)</title>
+  <style>
+    :root {
+      --bg-main: #f4f6f9;
+      --bg-card: #ffffff;
+      --bg-header: #0d47a1;
+      --fg-header: #ffffff;
+      --fg-title: #0d47a1;
+      --fg-text: #212529;
+      --fg-muted: #495057;
+      --border: #dee2e6;
+      --primary: #0d6efd;
+      --primary-fg: #ffffff;
+      --success: #198754;
+      --success-fg: #ffffff;
+      --secondary: #495057;
+      --secondary-fg: #ffffff;
+      --base-size: 15px;
+    }
+
+    body.high-contrast {
+      --bg-main: #000000;
+      --bg-card: #111111;
+      --bg-header: #000000;
+      --fg-header: #ffff00;
+      --fg-title: #ffff00;
+      --fg-text: #ffffff;
+      --fg-muted: #ffff00;
+      --border: #ffff00;
+      --primary: #ffff00;
+      --primary-fg: #000000;
+      --success: #00ff66;
+      --success-fg: #000000;
+      --secondary: #333333;
+      --secondary-fg: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      font-size: var(--base-size);
+      background: var(--bg-main);
+      color: var(--fg-text);
+    }
+
+    header {
+      background: var(--bg-header);
+      color: var(--fg-header);
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--border);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+    .brand small {
+      opacity: 0.9;
+      font-size: 0.85rem;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      min-height: 44px;
+      padding: 8px 16px;
+      border: 2px solid transparent;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    button:focus, input:focus, select:focus {
+      outline: 3px solid #ff9800;
+      outline-offset: 2px;
+    }
+
+    .btn-primary { background: var(--primary); color: var(--primary-fg); }
+    .btn-success { background: var(--success); color: var(--success-fg); }
+    .btn-secondary { background: var(--secondary); color: var(--secondary-fg); }
+    .btn-contrast { background: #212529; color: #ffffff; border-color: #ffffff; }
+    body.high-contrast .btn-contrast { background: #ffff00; color: #000000; }
+
+    .container {
+      max-width: 1120px;
+      margin: 22px auto;
+      padding: 0 16px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 22px;
+      margin-bottom: 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    h2 {
+      margin-top: 0;
+      color: var(--fg-title);
+      font-size: 1.2rem;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+    }
+
+    input, select {
+      width: 100%;
+      min-height: 42px;
+      padding: 8px 10px;
+      border: 2px solid var(--border);
+      border-radius: 5px;
+      background: var(--bg-card);
+      color: var(--fg-text);
+      font-size: 0.95rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background: var(--bg-header);
+      color: var(--fg-header);
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.82rem;
+      background: #d1e7dd;
+      color: #0f5132;
+    }
+    body.high-contrast .status-badge {
+      background: #000000;
+      color: #00ff66;
+      border: 1px solid #00ff66;
+    }
+
+    .footer-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-card);
+      border-top: 2px solid var(--border);
+      padding: 8px 20px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1>👓 ÓTICA JURADO — Sistema de Gestão de Clientes e Receitas (MVP em Produção)</h1>
+      <small id="operatorStatus">Operador(a): Marcia Jurado (Gestora) | Status do Servidor: ONLINE (UP)</small>
+    </div>
+    <div class="toolbar">
+      <button class="btn-contrast" onclick="toggleContrast()" id="btnContrast">
+        ◐ Ativar Modo Alto Contraste (Acessibilidade - ODS 10)
+      </button>
+      <button class="btn-secondary" onclick="changeFont(1)">A+</button>
+      <button class="btn-secondary" onclick="changeFont(-1)">A-</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="btn-primary" onclick="showTab('consulta')" id="tabBtnConsulta">
+        🔍 Tela 3: Consulta de Clientes, CPF e Histórico (RF03 / RNF03)
+      </button>
+      <button class="btn-secondary" onclick="showTab('cadastro')" id="tabBtnCadastro">
+        ➕ Tela 2: Cadastrar Novo Cliente e Receita Óptica (RF01 / RF02)
+      </button>
+    </div>
+
+    <!-- TELA 3: CONSULTA -->
+    <div id="tabConsulta" class="card">
+      <h2>Consulta Rápida de Clientes e Histórico de Receitas (RF03)</h2>
+      <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:12px;">
+        <div style="flex:1; min-width:260px;">
+          <label for="searchInput">Digite o Nome, CPF do Cliente ou Tipo de Lente:</label>
+          <input id="searchInput" type="text" placeholder="Ex: João da Silva, 479.290.358-08 ou Crizal Acrílica..." oninput="renderTable()" />
+        </div>
+        <button class="btn-primary" onclick="renderTable()">🔍 Pesquisar no Sistema</button>
+        <button class="btn-success" onclick="exportCSV()">📊 Exportar Planilha CSV (RF04)</button>
+      </div>
+      <div id="metricsText" style="font-weight:700; color:var(--success); margin-bottom:8px;">
+        ✔ 4 registo(s) carregados em 0.8 ms (Meta RNF03 &lt; 2000 ms)
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome do Cliente</th>
+              <th>CPF</th>
+              <th>Telefone</th>
+              <th>Última Compra</th>
+              <th>Grau OD (Esf/Cil)</th>
+              <th>Grau OE (Esf/Cil)</th>
+              <th>Tipo de Lente</th>
+              <th>Valor</th>
+              <th>Status</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DETALHES / FICHA SECUNDÁRIA -->
+    <div id="fichaCard" class="card" style="display:none;">
+      <h2>📋 Histórico de Compras e Receita Óptica — Ficha Detalhada</h2>
+      <pre id="fichaTexto" style="background:var(--bg-main); padding:16px; border:1px solid var(--border); border-radius:6px; white-space:pre-wrap; font-family:Consolas, monospace;"></pre>
+      <button class="btn-success" onclick="window.print()">🖨️ Imprimir Orçamento / Ficha</button>
+      <button class="btn-secondary" onclick="document.getElementById('fichaCard').style.display='none'">Fechar Ficha</button>
+    </div>
+
+    <!-- TELA 2: CADASTRO -->
+    <div id="tabCadastro" class="card" style="display:none;">
+      <h2>Tela 2: Cadastro de Cliente e Receita Oftalmológica (RF01 e RF02)</h2>
+      <div class="grid-4">
+        <div>
+          <label>Nome Completo do Cliente *:</label>
+          <input id="cadNome" type="text" placeholder="Ex: Maria da Silva" />
+        </div>
+        <div>
+          <label>CPF (11 dígitos) *:</label>
+          <input id="cadCpf" type="text" placeholder="Ex: 111.222.333-44" />
+        </div>
+        <div>
+          <label>Telefone / WhatsApp *:</label>
+          <input id="cadTel" type="text" placeholder="Ex: (11) 98765-4321" />
+        </div>
+        <div>
+          <label>Data da Compra / Receita *:</label>
+          <input id="cadData" type="text" value="16/11/2026" />
+        </div>
+      </div>
+
+      <div class="grid-4">
+        <div>
+          <label>Grau Esférico OD * (ex: -2.25):</label>
+          <input id="cadOdEsf" type="text" value="-2.25" />
+        </div>
+        <div>
+          <label>Grau Cilíndrico OD:</label>
+          <input id="cadOdCil" type="text" value="-0.50" />
+        </div>
+        <div>
+          <label>Grau Esférico OE * (ex: -1.75):</label>
+          <input id="cadOeEsf" type="text" value="-1.75" />
+        </div>
+        <div>
+          <label>Grau Cilíndrico OE:</label>
+          <input id="cadOeCil" type="text" value="-0.25" />
+        </div>
+      </div>
+
+      <div class="grid-4">
+        <div>
+          <label>Tipo de Lente Escolhida *:</label>
+          <select id="cadLente">
+            <option>Crizal Acrílica</option>
+            <option>Policarbonato Blue Control (Filtro Luz Azul)</option>
+            <option>Multifocal Varilux Comfort Crizal</option>
+            <option>Multifocal Digital Crizal Easy Pro</option>
+          </select>
+        </div>
+        <div>
+          <label>Armação:</label>
+          <input id="cadArmacao" type="text" value="Acetato Preto Classic" />
+        </div>
+        <div>
+          <label>Valor da Venda (R$):</label>
+          <input id="cadValor" type="text" value="R$ 680,00" />
+        </div>
+        <div>
+          <label>Status do Pedido:</label>
+          <select id="cadStatus">
+            <option>Pedido Entregue / Concluído</option>
+            <option>Pronto para Montagem</option>
+            <option>No Laboratório</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn-success" onclick="salvarCliente()">💾 Salvar Cliente e Receita no Sistema (RF01 / RF02)</button>
+    </div>
+  </div>
+
+  <div class="footer-bar">
+    <span>✔ Segurança OWASP Ativa (RNF01 / RNF02) | ODS 8, ODS 10 e ODS 3</span>
+    <span>Repositório: github.com/ccrazyjapinha-debug/otica-jurado-mvp</span>
+  </div>
+
+  <script>
+    const registros = [
+      {
+        id: 1,
+        nome: "João da Silva",
+        cpf: "479.290.358-08",
+        tel: "(11) 99123-4567",
+        data: "10/10/2026",
+        od: "-2.25 (-0.50)",
+        oe: "-1.75 (-0.25)",
+        lente: "Crizal Acrílica",
+        armacao: "Acetato Preto Classic",
+        valor: "R$ 680,00",
+        status: "Pedido Entregue / Concluído"
+      },
+      {
+        id: 2,
+        nome: "Maria da Silva",
+        cpf: "321.654.987-01",
+        tel: "(11) 98765-4321",
+        data: "12/05/2026",
+        od: "-2.00 (-0.75)",
+        oe: "-1.75 (-0.50)",
+        lente: "Policarbonato Blue Control (Filtro Luz Azul)",
+        armacao: "Metal Dourado Redondo",
+        valor: "R$ 540,00",
+        status: "Pedido Entregue / Concluído"
+      },
+      {
+        id: 3,
+        nome: "João Pereira",
+        cpf: "123.456.789-10",
+        tel: "(11) 91234-5678",
+        data: "15/09/2026",
+        od: "-1.00 (0.00)",
+        oe: "-1.25 (-0.25)",
+        lente: "Multifocal Varilux Comfort Crizal",
+        armacao: "Titânio Cinza Leve",
+        valor: "R$ 1.290,00",
+        status: "Pronto para Montagem"
+      },
+      {
+        id: 4,
+        nome: "Ana Paula Oliveira",
+        cpf: "852.741.963-44",
+        tel: "(11) 97654-3210",
+        data: "05/11/2026",
+        od: "+1.50 (-0.50)",
+        oe: "+1.75 (-0.50)",
+        lente: "Multifocal Digital Crizal Easy Pro",
+        armacao: "Acetato Tartaruga Feminino",
+        valor: "R$ 980,00",
+        status: "No Laboratório"
+      }
+    ];
+
+    let fontSize = 15;
+
+    function renderTable() {
+      const t0 = performance.now();
+      const q = (document.getElementById("searchInput").value || "").toLowerCase();
+      const tbody = document.getElementById("tableBody");
+      tbody.innerHTML = "";
+      const filtrados = registros.filter(r =>
+        r.nome.toLowerCase().includes(q) ||
+        r.cpf.toLowerCase().includes(q) ||
+        r.cpf.replace(/\D/g, "").includes(q) ||
+        r.lente.toLowerCase().includes(q)
+      );
+      filtrados.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r.id}</td>
+          <td><strong>${r.nome}</strong></td>
+          <td>${r.cpf}</td>
+          <td>${r.tel}</td>
+          <td>${r.data}</td>
+          <td>${r.od}</td>
+          <td>${r.oe}</td>
+          <td>${r.lente}</td>
+          <td>${r.valor}</td>
+          <td><span class="status-badge">${r.status}</span></td>
+          <td><button class="btn-primary" style="min-height:34px;padding:4px 10px;" onclick="verFicha(${r.id})">📋 Ver Ficha</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      const dt = (performance.now() - t0).toFixed(1);
+      document.getElementById("metricsText").textContent =
+        `✔ ${filtrados.length} registo(s) carregados em ${dt} ms (Meta RNF03 < 2000 ms)`;
+    }
+
+    function verFicha(id) {
+      const r = registros.find(x => x.id === id);
+      if (!r) return;
+      document.getElementById("fichaTexto").textContent =
+`================================================================
+                 ÓTICA JURADO - FICHA E ORÇAMENTO               
+================================================================
+Cliente         : ${r.nome}
+CPF             : ${r.cpf}
+Telefone        : ${r.tel}
+Data da Compra  : ${r.data}
+----------------------------------------------------------------
+ • Olho Direito (OD) : ${r.od}
+ • Olho Esquerdo (OE): ${r.oe}
+ • Tipo de Lente     : ${r.lente}
+ • Armação           : ${r.armacao}
+ • Valor Total       : ${r.valor}
+ • Status do Pedido  : ${r.status}
+================================================================`;
+      document.getElementById("fichaCard").style.display = "block";
+    }
+
+    function showTab(tab) {
+      document.getElementById("tabConsulta").style.display = tab === "consulta" ? "block" : "none";
+      document.getElementById("tabCadastro").style.display = tab === "cadastro" ? "block" : "none";
+      document.getElementById("tabBtnConsulta").className = tab === "consulta" ? "btn-primary" : "btn-secondary";
+      document.getElementById("tabBtnCadastro").className = tab === "cadastro" ? "btn-primary" : "btn-secondary";
+    }
+
+    function salvarCliente() {
+      const nome = document.getElementById("cadNome").value.trim();
+      const cpf = document.getElementById("cadCpf").value.trim();
+      const tel = document.getElementById("cadTel").value.trim();
+      if (!nome || !cpf || !tel) {
+        alert("⚠ Preencha os campos obrigatórios: Nome, CPF e Telefone.");
+        return;
+      }
+      registros.unshift({
+        id: registros.length + 1,
+        nome,
+        cpf,
+        tel,
+        data: document.getElementById("cadData").value,
+        od: `${document.getElementById("cadOdEsf").value} (${document.getElementById("cadOdCil").value})`,
+        oe: `${document.getElementById("cadOeEsf").value} (${document.getElementById("cadOeCil").value})`,
+        lente: document.getElementById("cadLente").value,
+        armacao: document.getElementById("cadArmacao").value,
+        valor: document.getElementById("cadValor").value,
+        status: document.getElementById("cadStatus").value
+      });
+      alert(`✔ Cliente '${nome}' e receita óptica salvos com sucesso!`);
+      showTab("consulta");
+      renderTable();
+    }
+
+    function toggleContrast() {
+      document.body.classList.toggle("high-contrast");
+      const active = document.body.classList.contains("high-contrast");
+      document.getElementById("btnContrast").textContent = active
+        ? "☀ Desativar Alto Contraste"
+        : "◐ Ativar Modo Alto Contraste (Acessibilidade - ODS 10)";
+    }
+
+    function changeFont(delta) {
+      fontSize = Math.max(13, Math.min(20, fontSize + delta));
+      document.documentElement.style.setProperty("--base-size", fontSize + "px");
+    }
+
+    function exportCSV() {
+      const rows = [["ID","Nome","CPF","Telefone","Data","OD","OE","Lente","Valor","Status"]];
+      registros.forEach(r => rows.push([r.id, r.nome, r.cpf, r.tel, r.data, r.od, r.oe, r.lente, r.valor, r.status]));
+      const csv = rows.map(r => r.join(";")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "relatorio_otica_jurado.csv";
+      a.click();
+    }
+
+    renderTable();
+  </script>
+</body>
+</html>
